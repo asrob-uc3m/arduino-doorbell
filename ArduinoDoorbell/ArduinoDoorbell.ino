@@ -1,7 +1,8 @@
 /**
- * File: MeetingBuzzerWebServer.ino
- * Version: 1.0.0
+ * File: ArduinoDoorbell.ino
+ * Version: 1.1.0
  * Description: Serves a web page to trigger a buzzer during configured meeting times.
+ *              Can run as an Access Point (AP) or connect to an existing network.
  * Hardware: Arduino Nano 33 IoT, I2C RTC Module (DS3231/DS1307), Piezo Buzzer
  * Required Libraries: WiFiNINA, RTClib
  */
@@ -12,8 +13,11 @@
 #include <RTClib.h>
 
 // --- Configuration ---
-char ssid[] = "YOUR_WIFI_SSID";      // your network SSID (name)
-char pass[] = "YOUR_WIFI_PASSWORD";  // your network password
+// Set to 'true' to create an Access Point, or 'false' to connect to an existing Wi-Fi network
+const bool USE_AP_MODE = true; 
+
+char ssid[] = "YOUR_WIFI_SSID";      // Network SSID (name of the AP to create or connect to)
+char pass[] = "YOUR_WIFI_PASSWORD";  // Network password (at least 8 characters for AP mode)
 int status = WL_IDLE_STATUS;
 
 const int BUZZER_PIN = 8;            // Pin connected to the Piezo Buzzer
@@ -62,17 +66,35 @@ void setup() {
     while (true);
   }
 
-  // Attempt to connect to WiFi network
-  while (status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to Network named: ");
+  // Initialize Network Connection
+  if (USE_AP_MODE) {
+    Serial.print("Creating Access Point named: ");
     Serial.println(ssid);
-    status = WiFi.begin(ssid, pass);
-    delay(10000);
+    
+    status = WiFi.beginAP(ssid, pass);
+    if (status != WL_AP_LISTENING) {
+      Serial.println("Creating access point failed");
+      while (true); // halt
+    }
+    delay(10000); // Wait 10 seconds for the AP to fully initialize
+  } else {
+    // Attempt to connect to existing WiFi network
+    while (status != WL_CONNECTED) {
+      Serial.print("Attempting to connect to Network named: ");
+      Serial.println(ssid);
+      status = WiFi.begin(ssid, pass);
+      delay(10000);
+    }
   }
 
   server.begin();
   
-  Serial.println("WiFi connected.");
+  if (USE_AP_MODE) {
+    Serial.println("Access Point created successfully.");
+  } else {
+    Serial.println("WiFi connected.");
+  }
+  
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
   Serial.println("Web server started. Waiting for clients...");
