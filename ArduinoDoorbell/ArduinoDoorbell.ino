@@ -1,7 +1,7 @@
 /**
  * File: ArduinoDoorbell.ino
- * Version: 1.1.0
- * Description: Serves a web page to trigger a buzzer during configured meeting times.
+ * Version: 1.2.0
+ * Description: Serves a web page to trigger a buzzer during configured weekly meeting times.
  *              Can run as an Access Point (AP) or connect to an existing network.
  * Hardware: Arduino Nano 33 IoT, I2C RTC Module (DS3231/DS1307), Piezo Buzzer
  * Required Libraries: WiFiNINA, RTClib
@@ -24,6 +24,7 @@ const int BUZZER_PIN = 8;            // Pin connected to the Piezo Buzzer
 
 // --- Time Slot Configuration ---
 struct TimeSlot {
+  uint8_t dayOfWeek; // 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
   uint8_t startHour;
   uint8_t startMinute;
   uint8_t endHour;
@@ -34,8 +35,8 @@ struct TimeSlot {
 const int NUM_SLOTS = 2; 
 
 TimeSlot meetingSlots[NUM_SLOTS] = {
-  {9, 0, 10, 30},   // Slot 1: 09:00 to 10:30
-  {14, 0, 15, 30}   // Slot 2: 14:00 to 15:30
+  {3, 16, 0, 21, 0},   // Wednesday: 16:00 to 21:00
+  {5, 11, 0, 14, 0}    // Friday: 11:00 to 14:00
 };
 
 // --- Objects ---
@@ -163,14 +164,18 @@ void loop() {
 }
 
 bool isMeetingTime(DateTime now) {
+  int currentDay = now.dayOfTheWeek();
   int currentMins = now.hour() * 60 + now.minute();
   
   for (int i = 0; i < NUM_SLOTS; i++) {
-    int startMins = meetingSlots[i].startHour * 60 + meetingSlots[i].startMinute;
-    int endMins = meetingSlots[i].endHour * 60 + meetingSlots[i].endMinute;
-    
-    if (currentMins >= startMins && currentMins < endMins) {
-      return true;
+    // Only check times if the day of the week matches
+    if (currentDay == meetingSlots[i].dayOfWeek) {
+      int startMins = meetingSlots[i].startHour * 60 + meetingSlots[i].startMinute;
+      int endMins = meetingSlots[i].endHour * 60 + meetingSlots[i].endMinute;
+      
+      if (currentMins >= startMins && currentMins < endMins) {
+        return true;
+      }
     }
   }
   return false;
