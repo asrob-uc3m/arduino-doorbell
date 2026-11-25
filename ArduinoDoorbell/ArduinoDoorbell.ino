@@ -17,8 +17,8 @@
 // Set to 'true' to create an Access Point, or 'false' to connect to an existing Wi-Fi network
 const bool USE_AP_MODE = true;
 
-char ssid[] = "YOUR_WIFI_SSID";      // Network SSID (name of the AP to create or connect to)
-char pass[] = "YOUR_WIFI_PASSWORD";  // Network password (at least 8 characters for AP mode)
+char ssid[] = "asrob";      // Network SSID (name of the AP to create or connect to)
+char pass[] = "asrob";  // Network password (at least 8 characters for AP mode)
 int status = WL_IDLE_STATUS;
 
 // --- Pin Configuration ---
