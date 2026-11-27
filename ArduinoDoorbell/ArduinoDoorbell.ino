@@ -1,6 +1,6 @@
 /**
  * File: ArduinoDoorbell.ino
- * Version: 1.4.0
+ * Version: 1.4.1
  * Description: Serves a web page to trigger a buzzer during configured weekly meeting times.
  *              Can run as an Access Point (AP) or connect to an existing network.
  *              Uses a 3-wire DS1302 RTC module and displays current RTC time in Serial and web UI.
@@ -17,14 +17,14 @@
 // Set to 'true' to create an Access Point, or 'false' to connect to an existing Wi-Fi network
 const bool USE_AP_MODE = true;
 
-char ssid[] = "asrob";      // Network SSID (name of the AP to create or connect to)
-char pass[] = "asrob";  // Network password (at least 8 characters for AP mode)
+char ssid[] = "asrobtimbre";      // Network SSID (name of the AP to create or connect to)
+char pass[] = "asrobtimbre";  // Network password (at least 8 characters for AP mode)
 int status = WL_IDLE_STATUS;
 
 // --- Pin Configuration ---
 const int BUZZER_PIN = 8;            // Pin connected to the Piezo Buzzer
-const int RTC_DAT_PIN = 4;           // DS1302 DAT / IO pin
-const int RTC_CLK_PIN = 5;           // DS1302 CLK / SCLK pin
+const int RTC_DAT_PIN = 3;           // DS1302 DAT / IO pin
+const int RTC_CLK_PIN = 4;           // DS1302 CLK / SCLK pin
 const int RTC_RST_PIN = 2;           // DS1302 RST / CE pin
 
 // --- Time Slot Configuration ---
@@ -51,7 +51,7 @@ const char* DAYS_OF_WEEK[7] = {
 // --- Objects ---
 WiFiServer server(80);
 ThreeWire myWire(RTC_DAT_PIN, RTC_CLK_PIN, RTC_RST_PIN); // (IO/DAT, SCLK/CLK, CE/RST)
-RtcDS1302<ThreeWire> Rtc(myWire);
+RtcDS1302<ThreeWire> rtc(myWire);
 
 void setup() {
   Serial.begin(9600);
@@ -62,25 +62,25 @@ void setup() {
 
   // Initialize DS1302 RTC
   Serial.println("Initializing DS1302 RTC...");
-  Rtc.Begin();
+  rtc.Begin();
 
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
 
-  if (Rtc.GetIsWriteProtected()) {
+  if (rtc.GetIsWriteProtected()) {
     Serial.println("RTC was write protected, enabling writing now");
-    Rtc.SetIsWriteProtected(false);
+    rtc.SetIsWriteProtected(false);
   }
 
-  if (!Rtc.GetIsRunning()) {
+  if (!rtc.GetIsRunning()) {
     Serial.println("RTC was not actively running, starting now");
-    Rtc.SetIsRunning(true);
+    rtc.SetIsRunning(true);
   }
 
-  RtcDateTime now = Rtc.GetDateTime();
-  if (!Rtc.IsDateTimeValid() || now < compiled) {
+  RtcDateTime now = rtc.GetDateTime();
+  if (!rtc.IsDateTimeValid() || now < compiled) {
     Serial.println("RTC lost confidence in the DateTime or is older than compile time! Updating...");
-    Rtc.SetDateTime(compiled);
-    now = Rtc.GetDateTime();
+    rtc.SetDateTime(compiled);
+    now = rtc.GetDateTime();
   }
 
   Serial.println("DS1302 RTC initialized.");
@@ -147,7 +147,7 @@ void loop() {
 
             // Handle the API endpoint for the buzzer
             if (requestPath.startsWith("GET /buzz")) {
-              RtcDateTime now = Rtc.GetDateTime();
+              RtcDateTime now = rtc.GetDateTime();
               if (isMeetingTime(now)) {
                 tone(BUZZER_PIN, 1000, 1000); // 1000 Hz tone for 1000 ms
 
@@ -223,7 +223,7 @@ bool isMeetingTime(const RtcDateTime& now) {
 }
 
 void serveHTML(WiFiClient& client) {
-  RtcDateTime now = Rtc.GetDateTime();
+  RtcDateTime now = rtc.GetDateTime();
 
   client.println("HTTP/1.1 200 OK");
   client.println("Content-type:text/html; charset=utf-8");
