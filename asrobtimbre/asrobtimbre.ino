@@ -45,7 +45,7 @@ TimeSlot meetingSlots[NUM_SLOTS] = {
 };
 
 const char* DAYS_OF_WEEK[7] = {
-  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+  "domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"
 };
 
 // --- Objects ---
@@ -152,17 +152,17 @@ void loop() {
                 tone(BUZZER_PIN, 1000, 1000); // 1000 Hz tone for 1000 ms
 
                 client.println("HTTP/1.1 200 OK");
-                client.println("Content-type:text/plain");
+                client.println("Content-type:text/plain; charset=utf-8");
                 client.println("Connection: close");
                 client.println();
-                client.println("Buzzer sounded successfully!");
+                client.println("¡El timbre ha sonado correctamente!");
                 Serial.println("Action: Buzzer SOUNDED (Valid meeting time)");
               } else {
                 client.println("HTTP/1.1 403 Forbidden");
-                client.println("Content-type:text/plain");
+                client.println("Content-type:text/plain; charset=utf-8");
                 client.println("Connection: close");
                 client.println();
-                client.println("Ignored: Outside of configured meeting times.");
+                client.println("Ignorado: Fuera del horario de reuniones configurado.");
                 Serial.println("Action: Buzzer BLOCKED (Outside meeting times)");
               }
             }
@@ -233,7 +233,7 @@ void serveHTML(WiFiClient& client) {
   // HTML & GUI
   client.println("<!DOCTYPE html><html>");
   client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-  client.println("<title>Meeting Room Controls</title>");
+  client.println("<title>asrobtimbre</title>");
   client.println("<style>");
   client.println("body { font-family: Georgia, serif; text-align: center; margin: 0; padding: 30px 15px; background-color: #1b4d96; color: #111; }");
   client.println(".card { background-color: #ffffff; max-width: 520px; margin: 22px auto; padding: 28px 24px; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); }");
@@ -251,7 +251,7 @@ void serveHTML(WiFiClient& client) {
   // Card 1: Schedule
   client.println("<div class=\"card\">");
   client.println("<h1>Horarios de reuniones</h1>");
-  client.println("<div class=\"subtitle\">Solo esta habilitado el timbre en los siguientes horarios:</div>");
+  client.println("<div class=\"subtitle\">Solo está habilitado el timbre en los siguientes horarios:</div>");
   for (int i = 0; i < NUM_SLOTS; i++) {
     char slotBuf[48];
     snprintf(slotBuf, sizeof(slotBuf), "%s: %02u:%02u - %02u:%02u",
@@ -267,9 +267,9 @@ void serveHTML(WiFiClient& client) {
   // Card 2: Doorbell Controls
   client.println("<div class=\"card\">");
   client.println("<h2>Timbre</h2>");
-  client.println("<button onclick=\"triggerBuzzer()\">Sound Buzzer</button>");
-  client.println("<div id=\"status\">Ready</div>");
-  client.print("<div id=\"rtc-time\">Arduino Time: ");
+  client.println("<button onclick=\"triggerBuzzer()\">Tocar timbre</button>");
+  client.println("<div id=\"status\">Listo</div>");
+  client.print("<div id=\"rtc-time\">Hora del Arduino: ");
   client.print(formatDateTime(now));
   client.println("</div>");
   client.println("</div>");
@@ -278,7 +278,7 @@ void serveHTML(WiFiClient& client) {
   client.println("<script>");
   client.println("function triggerBuzzer() {");
   client.println("  var statusDiv = document.getElementById('status');");
-  client.println("  statusDiv.innerHTML = 'Sending request...';");
+  client.println("  statusDiv.innerHTML = 'Enviando solicitud...';");
   client.println("  statusDiv.style.color = '#333';");
   client.println("  fetch('/buzz')");
   client.println("    .then(response => {");
@@ -287,7 +287,7 @@ void serveHTML(WiFiClient& client) {
   client.println("      return response.text();");
   client.println("    })");
   client.println("    .then(text => { statusDiv.innerHTML = text; })");
-  client.println("    .catch(err => { statusDiv.innerHTML = 'Network error'; statusDiv.style.color = 'red'; });");
+  client.println("    .catch(err => { statusDiv.innerHTML = 'Error de red'; statusDiv.style.color = 'red'; });");
   client.println("}");
   client.println("</script>");
 
